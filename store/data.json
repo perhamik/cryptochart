@@ -1,0 +1,35 @@
+{
+    "apiKey": "648f6c55d8454543f97e49e21380a24e9a22823f951aecc4c61e82574225b0c6",
+    "baseUrl": "https://min-api.cryptocompare.com/data/v2/",
+    "headers": {
+        "authorization": "Apikey 648f6c55d8454543f97e49e21380a24e9a22823f951aecc4c61e82574225b0c6"
+    },
+    "currencies": [
+        "BTC",
+        "ETH",
+        "XRP",
+        "BCN",
+        "LTC",
+        "BNB",
+        "DOT",
+        "ADA",
+        "BSV",
+        "EOS",
+        "XMR",
+        "XLM",
+        "XTZ",
+        "DASH",
+        "ZEC",
+        "DAI"
+    ],
+    "timemarks": [
+        "Minute",
+        "Hour",
+        "Day"       
+    ],
+    "requesttime": [
+        "histominute",
+        "histohour",
+        "histoday"       
+    ]
+}
