@@ -1,32 +1,15 @@
 <template>
   <div class="wrapper">
     <div class="container">
-      <Chart :data="this.$data.currencydata" />
-      <div
-        v-if="this.$data.timelist"
-        class="timepick"
-      >
-        <div
-          v-for="(title, index) in this.$data.timelist"
-          :key="index"
-          ref="timeref"
-          :class="{'active': index === 0}"
-          @click="timeChange(index)"
-        >
-          <span>{{ title }}</span>
-        </div>
-      </div>
+      <Chart :chart="this.$data.currencydata" />
     </div>
-    <div
-      v-if="this.$data.list"
-      class="controlls"
-    >
+    <div class="controlls">
       <div
         v-for="(title, index) in this.$data.list"
         :key="index"
         ref="cryptoref"
         :class="{'active': index === 0}"
-        @click="cryptoChange(index)"
+        @click="cryptoChange(index, title)"
       >
         <span>{{ title }}</span>
       </div>
@@ -38,6 +21,14 @@
 import impdata from '../store/data.json'
 const axios = require('axios')
 
+const getFullURL = function (url, type, options) {
+  const params = []
+  for (const key in options) {
+    params.push(`${key}=${options[key]}`)
+  }
+  return url + type + '?' + params.join('&')
+}
+
 export default {
   async fetch () {
     this.list = await impdata.currencies
@@ -48,43 +39,48 @@ export default {
       response: null,
       currencydata: {},
       list: [],
-      timelist: []
+      timelist: [],
+      selectedTime: 'histominute',
+      options: {
+        fsym: 'ETH',
+        tsym: 'USD',
+        limit: 700
+      }
     }
   },
   mounted () {
-    axios
-      .get(fullURL, impdata.headers)
-      .then(
-        (response) => {
-          this.response = response.data.Data.Data
-          this.currencydata = this.getData(this.response)
-        },
-        (error) => {
-          this.answer = error
-        }
-      )
+    this.reviewChanges()
   },
   methods: {
-    getData (source) {
-      const ohlcv = {
-        ohlcv: source.map(item => [
-          item.time * 1000,
-          item.open,
-          item.high,
-          item.low,
-          item.close,
-          item.volumeto
-        ])
+    getFullURL (url, type, options) {
+      const params = []
+      for (const key in options) {
+        params.push(`${key}=${options[key]}`)
       }
-      return ohlcv
+      return url + type + '?' + params.join('&')
     },
-    timeChange (item) {
-      this.uncheck(this.$refs.timeref)
-      this.check(this.$refs.timeref, item)
+    reviewChanges () {
+      const promise = apiRequest(getFullURL(impdata.baseUrl, this.selectedTime, this.options))
+      promise.then((result) => {
+        if (result.data.Data.Data) {
+          this.$data.currencydata = {
+            ohlcv: result.data.Data.Data.map(item => [
+              item.time * 1000,
+              item.open,
+              item.high,
+              item.low,
+              item.close,
+              item.volumeto
+            ])
+          }
+        }
+      })
     },
-    cryptoChange (item) {
+    cryptoChange (index, item) {
+      this.options.fsym = item
+      this.reviewChanges()
       this.uncheck(this.$refs.cryptoref)
-      this.check(this.$refs.cryptoref, item)
+      this.check(this.$refs.cryptoref, index)
     },
     check (list, item) {
       list[item].className = 'active'
@@ -96,21 +92,13 @@ export default {
     }
   }
 }
-const getFullURL = function (url, type, options) {
-  const params = []
-  for (const key in options) {
-    params.push(`${key}=${options[key]}`)
+async function apiRequest (link) {
+  try {
+    return await axios.get(link, impdata.headers)
+  } catch (err) {
+    console.error(err)
   }
-  return url + type + '?' + params.join('&')
 }
-const timeSelect = 'histominute'
-const options = {
-  fsym: 'BTC',
-  tsym: 'USD',
-  limit: 20
-}
-
-const fullURL = getFullURL(impdata.baseUrl, timeSelect, options)
 </script>
 
 <style>
@@ -133,8 +121,9 @@ const fullURL = getFullURL(impdata.baseUrl, timeSelect, options)
 }
 .controlls {
   display: grid;
+  max-width: 800px;
   grid-gap: 1rem 2rem;
-  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
 }
 .timepick {
   display: flex;
@@ -159,27 +148,4 @@ const fullURL = getFullURL(impdata.baseUrl, timeSelect, options)
 .timepick > div.active {
   background-color: rgba(250, 150, 0, 0.7);
 }
-/*
-@media screen and (max-width: 576px){
-  #trading-vue-js {
-    max-width: 540px;
-  }
-}
-@media screen and (max-width: 768px){
-  #trading-vue-js {
-    max-width: 540px;
-  }
-}
-@media screen and (max-width: 990px){
-  #trading-vue-js {
-    max-width: 540px;
-  }
-}
-@media screen and (max-width: 1200px){
-  #trading-vue-js {
-    max-width: 540px;
-  }
-}
-@media screen and (min-width: 1201px){
-} */
 </style>

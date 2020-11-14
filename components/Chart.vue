@@ -1,13 +1,14 @@
 <template>
-  <trading-vue :data="data" />
+  <trading-vue :data="chart" />
 </template>
 <script>
 import TradingVue from 'trading-vue-js'
+
 export default {
   name: 'Chart',
   components: { TradingVue },
   props: {
-    data: {}
+    chart: {}
   }
 }
 </script>

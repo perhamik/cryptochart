@@ -8,11 +8,10 @@
         "BTC",
         "ETH",
         "XRP",
-        "BCN",
+        "UNI",
         "LTC",
         "BNB",
-        "DOT",
-        "ADA",
+        "BCH",
         "BSV",
         "EOS",
         "XMR",
@@ -20,7 +19,7 @@
         "XTZ",
         "DASH",
         "ZEC",
-        "DAI"
+        "LINK"
     ],
     "timemarks": [
         "Minute",
