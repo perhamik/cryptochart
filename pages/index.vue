@@ -42,7 +42,7 @@ export default {
       timelist: [],
       selectedTime: 'histominute',
       options: {
-        fsym: 'ETH',
+        fsym: 'BTC',
         tsym: 'USD',
         limit: 700
       }
