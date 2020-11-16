@@ -3,15 +3,19 @@
     <div class="container">
       <Chart :chart="this.$data.currencydata" />
     </div>
+    <div class="status-bar">
+      <span>{{ this.$data.time }}</span>
+    </div>
     <div class="controlls">
       <div
-        v-for="(title, index) in this.$data.list"
+        v-for="(obj, index) in this.$data.allCurrencies"
         :key="index"
         ref="cryptoref"
         :class="{'active': index === 0}"
-        @click="cryptoChange(index, title)"
+        @click="cryptoChange(index, obj.currency)"
       >
-        <span>{{ title }}</span>
+        <span>{{ obj.currency }}</span>
+        <span>${{ obj.exchrate }}</span>
       </div>
     </div>
   </div>
@@ -33,25 +37,41 @@ export default {
   async fetch () {
     this.list = await impdata.currencies
     this.timelist = await impdata.timemarks
+    this.mulOptions.fsyms = this.list.join(',')
   },
   data () {
     return {
+      time: Number,
       response: null,
       currencydata: {},
       list: [],
-      timelist: [],
-      selectedTime: 'histominute',
+      allCurrencies: [],
+      selectedTime: 'v2/histominute',
+      multicur: 'pricemulti',
       options: {
         fsym: 'BTC',
         tsym: 'USD',
-        limit: 700
+        limit: 100
+      },
+      mulOptions: {
+        fsyms: '',
+        tsyms: 'USD'
       }
     }
   },
   mounted () {
+    this.tick()
     this.reviewChanges()
+    setTimeout(() => this.getCurrentByAll(), 50)
+    setInterval(() => this.tick(), 600)
   },
   methods: {
+    tick () {
+      const current = new Date().toLocaleString('ua-UA', { timeZone: 'Europe/Moscow' })
+      this.$set(this.$data, 'time', current)
+      this.reviewChanges()
+      this.getCurrentByAll()
+    },
     getFullURL (url, type, options) {
       const params = []
       for (const key in options) {
@@ -65,7 +85,7 @@ export default {
         if (result.data.Data.Data) {
           this.$data.currencydata = {
             ohlcv: result.data.Data.Data.map(item => [
-              item.time * 1000,
+              (item.time + 7200) * 1000,
               item.open,
               item.high,
               item.low,
@@ -81,6 +101,17 @@ export default {
       this.reviewChanges()
       this.uncheck(this.$refs.cryptoref)
       this.check(this.$refs.cryptoref, index)
+    },
+    getCurrentByAll () {
+      const promise = apiRequest(getFullURL(impdata.baseUrl, this.multicur, this.mulOptions))
+      promise.then((res) => {
+        const values = []
+        for (const prop in res.data) {
+          const item = { currency: prop, exchrate: res.data[prop].USD }
+          values.push(item)
+        }
+        this.allCurrencies = values
+      })
     },
     check (list, item) {
       list[item].className = 'active'
@@ -125,27 +156,32 @@ async function apiRequest (link) {
   grid-gap: 1rem 2rem;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
 }
-.timepick {
+.controlls > div {
   display: flex;
   flex-direction: column;
-  justify-content: space-evenly;
-  margin-left: 2rem;
-}
-.controlls > div,
-.timepick > div {
-  background-color: rgba(80, 80, 80, 0.4);
+  background-color: rgba(10, 120, 10, 0.5);
   padding: 20px;
   color: #fff;
   border: 1px solid #fff;
   cursor: pointer;
-  transition: .7s all;
+  transition: .4s all;
 }
-.controlls > div:hover,
-.timepick > div:hover {
-  background-color: rgba(50, 50, 50, 0.7);
+.controlls > div:hover{
+  background-color: rgba(10, 120, 10, 0.8);
 }
-.controlls > div.active,
-.timepick > div.active {
-  background-color: rgba(250, 150, 0, 0.7);
+.controlls > div.active{
+  background-color: rgba(250, 120, 10, 0.8);
+}
+
+.controlls > div > span:first-child {
+  font-size: 1.2em;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-shadow: 0 0 3px rgba(20, 20, 20, 0.7);
+}
+.controlls > div > span:last-child {
+  margin-top: 5px;
+  text-shadow: 0 0 1.5px rgba(20, 20, 20, 0.7);
+  font-weight: 500;
 }
 </style>

@@ -1,6 +1,6 @@
 {
     "apiKey": "648f6c55d8454543f97e49e21380a24e9a22823f951aecc4c61e82574225b0c6",
-    "baseUrl": "https://min-api.cryptocompare.com/data/v2/",
+    "baseUrl": "https://min-api.cryptocompare.com/data/",
     "headers": {
         "authorization": "Apikey 648f6c55d8454543f97e49e21380a24e9a22823f951aecc4c61e82574225b0c6"
     },
