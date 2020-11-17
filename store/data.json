@@ -21,11 +21,6 @@
         "ZEC",
         "LINK"
     ],
-    "timemarks": [
-        "Minute",
-        "Hour",
-        "Day"       
-    ],
     "requesttime": [
         "histominute",
         "histohour",

@@ -36,8 +36,6 @@ const getFullURL = function (url, type, options) {
 export default {
   async fetch () {
     this.list = await impdata.currencies
-    this.timelist = await impdata.timemarks
-    this.mulOptions.fsyms = this.list.join(',')
   },
   data () {
     return {
@@ -47,7 +45,6 @@ export default {
       list: [],
       allCurrencies: [],
       selectedTime: 'v2/histominute',
-      multicur: 'pricemulti',
       options: {
         fsym: 'BTC',
         tsym: 'USD',
@@ -55,7 +52,8 @@ export default {
       },
       mulOptions: {
         fsyms: '',
-        tsyms: 'USD'
+        tsyms: 'USD',
+        limit: 1
       }
     }
   },
@@ -63,7 +61,7 @@ export default {
     this.tick()
     this.reviewChanges()
     setTimeout(() => this.getCurrentByAll(), 50)
-    setInterval(() => this.tick(), 600)
+    setInterval(() => this.tick(), 2000)
   },
   methods: {
     tick () {
@@ -71,13 +69,6 @@ export default {
       this.$set(this.$data, 'time', current)
       this.reviewChanges()
       this.getCurrentByAll()
-    },
-    getFullURL (url, type, options) {
-      const params = []
-      for (const key in options) {
-        params.push(`${key}=${options[key]}`)
-      }
-      return url + type + '?' + params.join('&')
     },
     reviewChanges () {
       const promise = apiRequest(getFullURL(impdata.baseUrl, this.selectedTime, this.options))
@@ -103,14 +94,23 @@ export default {
       this.check(this.$refs.cryptoref, index)
     },
     getCurrentByAll () {
-      const promise = apiRequest(getFullURL(impdata.baseUrl, this.multicur, this.mulOptions))
-      promise.then((res) => {
-        const values = []
-        for (const prop in res.data) {
-          const item = { currency: prop, exchrate: res.data[prop].USD }
-          values.push(item)
+      const values = this.allCurrencies || []
+      const queue = this.list.map((name, id) => {
+        if (values.length < 15) {
+          values.push({ currency: name, exchrate: null })
         }
-        this.allCurrencies = values
+        const multiOptions = {
+          fsym: name,
+          tsym: 'USD',
+          limit: 1
+        }
+        return getFullURL(impdata.baseUrl, this.selectedTime, multiOptions)
+      })
+      queue.map((item, id) => {
+        return apiRequest(item)
+          .then((result) => {
+            values[id].exchrate = result.data.Data.Data[1].close
+          })
       })
     },
     check (list, item) {
