@@ -1,9 +1,7 @@
 {
     "apiKey": "648f6c55d8454543f97e49e21380a24e9a22823f951aecc4c61e82574225b0c6",
-    "baseUrl": "https://min-api.cryptocompare.com/data/",
-    "headers": {
-        "authorization": "Apikey 648f6c55d8454543f97e49e21380a24e9a22823f951aecc4c61e82574225b0c6"
-    },
+    "baseUrl": "https://min-api.cryptocompare.com/data/v2/",    
+    "api_key": "525b01d1dd1df151540c7ac33115c19f51a51198a2a73dbd2f62395be1beb768",    
     "currencies": [
         "BTC",
         "ETH",

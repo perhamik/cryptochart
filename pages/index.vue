@@ -8,14 +8,14 @@
     </div>
     <div class="controlls">
       <div
-        v-for="(obj, index) in this.$data.allCurrencies"
-        :key="index"
-        ref="cryptoref"
-        :class="{'active': index === 0}"
-        @click="cryptoChange(index, obj.currency)"
+        v-for="(obj, prop, index) in this.$data.allCurrencies"
+        :key="prop"
+        ref="cryptolist"
+        :class="{'active': prop === 'BTC'}"
+        @click="cryptoChange(prop, index)"
       >
-        <span>{{ obj.currency }}</span>
-        <span>${{ obj.exchrate }}</span>
+        <span>{{ prop }}</span>
+        <span>${{ obj[obj.length - 1].close }}</span>
       </div>
     </div>
   </div>
@@ -25,12 +25,12 @@
 import impdata from '../store/data.json'
 const axios = require('axios')
 
-const getFullURL = function (url, type, options) {
+const getFullURL = function (url, options) {
   const params = []
   for (const key in options) {
     params.push(`${key}=${options[key]}`)
   }
-  return url + type + '?' + params.join('&')
+  return `${url}histominute?${params.join('&')}&api_key=${impdata.api_key}`
 }
 
 export default {
@@ -40,76 +40,56 @@ export default {
   data () {
     return {
       time: Number,
-      response: null,
       currencydata: {},
       list: [],
-      allCurrencies: [],
-      selectedTime: 'v2/histominute',
-      options: {
-        fsym: 'BTC',
-        tsym: 'USD',
-        limit: 100
-      },
-      mulOptions: {
-        fsyms: '',
-        tsyms: 'USD',
-        limit: 1
-      }
+      allCurrencies: {},
+      selectedTime: 'histominute',
+      current: 'BTC'
     }
   },
   mounted () {
-    this.tick()
-    this.reviewChanges()
-    setTimeout(() => this.getCurrentByAll(), 50)
-    setInterval(() => this.tick(), 2000)
+    this.getCurrentByAll()
+    setInterval(() => this.tick(), 250)
+    setInterval(() => this.getCurrentByAll(), 2000)
   },
   methods: {
     tick () {
-      const current = new Date().toLocaleString('ua-UA', { timeZone: 'Europe/Moscow' })
-      this.$set(this.$data, 'time', current)
-      this.reviewChanges()
-      this.getCurrentByAll()
+      this.$set(this.$data, 'time', new Date().toLocaleString('ua-UA', { timeZone: 'Europe/Moscow' }))
+      this.updateChart()
     },
-    reviewChanges () {
-      const promise = apiRequest(getFullURL(impdata.baseUrl, this.selectedTime, this.options))
-      promise.then((result) => {
-        if (result.data.Data.Data) {
-          this.$data.currencydata = {
-            ohlcv: result.data.Data.Data.map(item => [
-              (item.time + 7200) * 1000,
-              item.open,
-              item.high,
-              item.low,
-              item.close,
-              item.volumeto
-            ])
-          }
-        }
-      })
+    updateChart () {
+      this.$data.currencydata = {
+        ohlcv: this.$data.allCurrencies[this.$data.current].map(item => [
+          item.time * 1000,
+          item.open,
+          item.high,
+          item.low,
+          item.close,
+          item.volumeto
+        ])
+      }
     },
-    cryptoChange (index, item) {
-      this.options.fsym = item
-      this.reviewChanges()
-      this.uncheck(this.$refs.cryptoref)
-      this.check(this.$refs.cryptoref, index)
+    cryptoChange (name, id) {
+      this.$set(this.$data, 'current', name)
+      this.updateChart()
+      this.uncheck(this.$refs.cryptolist)
+      this.check(this.$refs.cryptolist, id)
     },
-    getCurrentByAll () {
-      const values = this.allCurrencies || []
-      const queue = this.list.map((name, id) => {
-        if (values.length < 15) {
-          values.push({ currency: name, exchrate: null })
-        }
+    async getCurrentByAll () {
+      const values = this.allCurrencies
+      await this.list.map((name, id) => {
         const multiOptions = {
           fsym: name,
           tsym: 'USD',
-          limit: 1
+          limit: 30
         }
-        return getFullURL(impdata.baseUrl, this.selectedTime, multiOptions)
-      })
-      queue.map((item, id) => {
-        return apiRequest(item)
+        apiRequest(getFullURL(impdata.baseUrl, multiOptions))
           .then((result) => {
-            values[id].exchrate = result.data.Data.Data[1].close
+            if (result.data.Data.Data) {
+              values[name] = [...result.data.Data.Data]
+            } else {
+              console.log(result)
+            }
           })
       })
     },
